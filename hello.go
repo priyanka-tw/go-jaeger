@@ -1,25 +1,40 @@
 package main
 
 import (
-	"contrib.go.opencensus.io/exporter/ocagent"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"go.opencensus.io/trace"
 	"log"
 	"net/http"
-	"time"
+	"contrib.go.opencensus.io/exporter/jaeger"
+	"go.opencensus.io/trace"
 )
 
 func main() {
 	router := initializeRouter()
 
-	oce, _ := ocagent.NewExporter(ocagent.WithInsecure(),
-		ocagent.WithReconnectionPeriod(1*time.Second),
-		ocagent.WithAddress("localhost:55678"),
-		ocagent.WithServiceName("HEALTH_SERVICE"))
+
+	agentEndpointURI := "localhost:6831"
+	collectorEndpointURI := "http://localhost:14268/api/traces"
+
+	je, err := jaeger.NewExporter(jaeger.Options{
+		AgentEndpoint:          agentEndpointURI,
+		CollectorEndpoint:      collectorEndpointURI,
+		ServiceName:            "demoooooo",
+	})
+	if err != nil {
+		log.Fatalf("Failed to create the Jaeger exporter: %v", err)
+	}
+
+	// And now finally register it as a Trace Exporter
+	trace.RegisterExporter(je)
+
+	// oce, _ := ocagent.NewExporter(ocagent.WithInsecure(),
+	// 	ocagent.WithReconnectionPeriod(1*time.Second),
+	// 	ocagent.WithAddress("localhost:55678"),
+	// 	ocagent.WithServiceName("HEALTH_SERVICE"))
 
 
-	trace.RegisterExporter(oce)
+	// trace.RegisterExporter(oce)
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 	router.Run()
