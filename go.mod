@@ -3,7 +3,7 @@ module com/listen
 go 1.14
 
 require (
-	contrib.go.opencensus.io/exporter/jaeger v0.2.0 // indirect
+	contrib.go.opencensus.io/exporter/jaeger v0.2.0
 	contrib.go.opencensus.io/exporter/ocagent v0.6.0
 	github.com/gin-gonic/gin v1.6.2
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect

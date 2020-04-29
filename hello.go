@@ -1,43 +1,25 @@
 package main
 
 import (
+	"contrib.go.opencensus.io/exporter/jaeger"
+	"contrib.go.opencensus.io/exporter/ocagent"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"go.opencensus.io/trace"
 	"log"
 	"net/http"
-	"contrib.go.opencensus.io/exporter/jaeger"
-	"go.opencensus.io/trace"
+	"time"
 )
 
 func main() {
 	router := initializeRouter()
 
+	withOCJaegerExporter()
 
-	agentEndpointURI := "localhost:6831"
-	collectorEndpointURI := "http://localhost:14268/api/traces"
-
-	je, err := jaeger.NewExporter(jaeger.Options{
-		AgentEndpoint:          agentEndpointURI,
-		CollectorEndpoint:      collectorEndpointURI,
-		ServiceName:            "demoooooo",
-	})
+	err := router.Run()
 	if err != nil {
-		log.Fatalf("Failed to create the Jaeger exporter: %v", err)
+		log.Fatal("error while starting the service")
 	}
-
-	// And now finally register it as a Trace Exporter
-	trace.RegisterExporter(je)
-
-	// oce, _ := ocagent.NewExporter(ocagent.WithInsecure(),
-	// 	ocagent.WithReconnectionPeriod(1*time.Second),
-	// 	ocagent.WithAddress("localhost:55678"),
-	// 	ocagent.WithServiceName("HEALTH_SERVICE"))
-
-
-	// trace.RegisterExporter(oce)
-	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
-
-	router.Run()
 }
 
 func initializeRouter() *gin.Engine {
@@ -52,19 +34,45 @@ func initializeRouter() *gin.Engine {
 
 func handleHello(ctx *gin.Context) {
 
-	_, span := trace.StartSpan(ctx, "/hellooooo-service")
+	_, span := trace.StartSpan(ctx, "/hello-service")
+
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("akey", "avalue"))
-	span.Annotate([]trace.Attribute{trace.StringAttribute("annotated", "anAnnotatedValue")}, "annotation check")
+	span.AddAttributes(trace.StringAttribute("aKey", "aValue"))
+	span.Annotate([]trace.Attribute{trace.StringAttribute("anAnnotatedKey", "anAnnotatedValue")}, "an annotation string")
 
 	mapOfAtt := map[string]interface{}{}
 
 	span.AddLink(trace.Link{Attributes: mapOfAtt})
 
 	logrus.Info("in hello handler!")
-	log.Println("A fatal log!")
-
 
 	ctx.JSON(http.StatusOK, gin.H{"data": "hello world"})
+}
+
+func withOCAgentExporter() {
+	oce, _ := ocagent.NewExporter(ocagent.WithInsecure(),
+		ocagent.WithReconnectionPeriod(1*time.Second),
+		ocagent.WithAddress("localhost:55678"),
+		ocagent.WithServiceName("HEALTH_SERVICE_OCAGENT"))
+
+	trace.RegisterExporter(oce)
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+}
+
+func withOCJaegerExporter(){
+	agentEndpointURI := "localhost:6831"
+	collectorEndpointURI := "http://localhost:14268/api/traces"
+
+	je, err := jaeger.NewExporter(jaeger.Options{
+		AgentEndpoint:          agentEndpointURI,
+		CollectorEndpoint:      collectorEndpointURI,
+		ServiceName:            "HEALTH_SERVICE_JAEGER_EXPORTER",
+	})
+	if err != nil {
+		log.Fatalf("Failed to create the Jaeger exporter: %v", err)
+	}
+
+	trace.RegisterExporter(je)
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 }
