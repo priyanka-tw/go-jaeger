@@ -1,6 +1,10 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"time"
+
 	jaegerExp "contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/ocagent"
 	"github.com/gin-gonic/gin"
@@ -9,9 +13,6 @@ import (
 	jaegerClient "github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
 	"go.opencensus.io/trace"
-	"log"
-	"net/http"
-	"time"
 )
 
 func main() {
@@ -53,7 +54,7 @@ func handleHelloWithOpenCensus(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": "hello world"})
 }
 
-func handleHelloWithOpenTracing(ctx *gin.Context){
+func handleHelloWithOpenTracing(ctx *gin.Context) {
 	tracer := opentracing.GlobalTracer()
 	tracer.StartSpan("hello-opertation")
 
@@ -74,13 +75,11 @@ func withOCAgentExporter() {
 }
 
 func withOCJaegerExporter() {
-	agentEndpointURI := "localhost:6831"
 	collectorEndpointURI := "http://localhost:14268/api/traces"
 
 	je, err := jaegerExp.NewExporter(jaegerExp.Options{
-		AgentEndpoint:     agentEndpointURI,
-		CollectorEndpoint: collectorEndpointURI,
-		ServiceName:       "HEALTH_SERVICE_JAEGER_EXPORTER",
+		Endpoint:    collectorEndpointURI,
+		ServiceName: "HEALTH_SERVICE_JAEGER_EXPORTER",
 	})
 	if err != nil {
 		log.Fatalf("Failed to create the Jaeger exporter: %v", err)
@@ -91,10 +90,10 @@ func withOCJaegerExporter() {
 }
 
 func withJaegerClientOpentracing() {
-
+	collectorEndpointURI := "http://localhost:14268/api/traces"
 	jaegerConfig := &config.Configuration{
 		Sampler:  &config.SamplerConfig{Type: "const", Param: 1},
-		Reporter: &config.ReporterConfig{LogSpans: true},
+		Reporter: &config.ReporterConfig{LogSpans: true, CollectorEndpoint: collectorEndpointURI},
 	}
 
 	closer, err := jaegerConfig.InitGlobalTracer(
