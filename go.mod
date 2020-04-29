@@ -1,4 +1,4 @@
-module com/listen
+module com/opentracing
 
 go 1.14
 
