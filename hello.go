@@ -15,7 +15,7 @@ import (
 	"go.opencensus.io/trace"
 )
 
-func main() {
+func withOpenTracing() {
 	router := initializeRouter()
 
 	withJaegerClientOpentracing() // add the exporter
@@ -91,9 +91,14 @@ func withOCJaegerExporter() {
 
 func withJaegerClientOpentracing() {
 	collectorEndpointURI := "http://localhost:14268/api/traces"
+
 	jaegerConfig := &config.Configuration{
-		Sampler:  &config.SamplerConfig{Type: "const", Param: 1},
-		Reporter: &config.ReporterConfig{LogSpans: true, CollectorEndpoint: collectorEndpointURI},
+		ServiceName: "HEALTH_SERVICE_JAEGER_CLIENT",
+		Sampler: &config.SamplerConfig{Type: "const", Param: 1},
+		Reporter: &config.ReporterConfig{
+			LogSpans:          true,
+			CollectorEndpoint: collectorEndpointURI,
+		},
 	}
 
 	closer, err := jaegerConfig.InitGlobalTracer(
