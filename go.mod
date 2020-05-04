@@ -39,7 +39,7 @@ require (
 	github.com/yuin/goldmark v1.1.30 // indirect
 	go.opencensus.io v0.22.3
 	go.opentelemetry.io/otel v0.4.3
-	go.opentelemetry.io/otel/exporters/trace/jaeger v0.4.3
+	go.opentelemetry.io/otel/exporters/trace v0.4.3
 	go.uber.org/atomic v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79 // indirect
 	golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5 // indirect

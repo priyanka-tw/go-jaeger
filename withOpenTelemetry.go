@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/api/core"
 	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/exporters/trace/stdout"
 	sdkTrace "go.opentelemetry.io/otel/sdk/trace"
 	"log"
 	"net/http"
@@ -24,9 +25,11 @@ func main() {
 }
 
 func initTracer() {
-	exporter, err := jaeger.NewRawExporter(
-		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
-	)
+	//exporter, err := jaeger.NewRawExporter(
+	//	jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
+	//)
+
+	exporter, err := stdout.NewExporter(stdout.Options{PrettyPrint: true})
 	if err != nil {
 		log.Fatal("unable to init tracer")
 	}
@@ -49,7 +52,12 @@ func newRouter() *gin.Engine {
 	return router
 }
 
-func routeHandler(ctx *gin.Context){
+func routeHandler(ctx *gin.Context) {
+
+	tracer := global.TraceProvider().Tracer("/hey")
+	_, span := tracer.Start(ctx, "hey-span")
+
+	span.SetAttributes(core.KeyValue{Key: "aNewKey", Value: core.String("nNewValue")})
 
 	log.Println("in router handler")
 
